@@ -1,92 +1,57 @@
-# Docusaurus-aca (Docusaurus in Azure Container App)
+# Docusaurus-aca-yaml (Docusaurus in Azure Container App using yaml deployment)
 
-This repository includes a simple Docusaurus Site with a basic template for hosting product documentation. The repo structure is planned for developing using within the [Dev Container](https://code.visualstudio.com/docs/devcontainers/containers)/[Codespaces](https://code.visualstudio.com/docs/remote/codespaces) and deploy using [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd).
+This repository includes a simple Docusaurus Site with a basic template for hosting product documentation. The repository is a helper for exploring different `DevOps` options for Container Apps cse-devblog
 
-## Basic documentation structure
+This flow takes advantage of the `YAML` option during a containerapp create/update/revision copy [link](https://aka.ms/azure-container-apps-yaml)
 
-```bash
-src/docusaurus/docs
-├── 01-intro.md
-├── 02-getting-started
-├── 03-tutorials
-├── 04-docs
-└── 05-contributing
-```
+## Bootstrap Infrastructure
 
-## Local Development
-
-All dependencies are installed as part of the devcontainer bootstrap. So, for starting the site:
+Validate you are connected to an Azure subscription and update `infra/sample.main.parameters.json` to `infra/main.parameters.json` with your details.
 
 ```bash
-cd src/docusaurus
-make dev
+make bootstrap
 ```
 
-Now you can visit localhost:3000
+For this flow, the infrastructure bootstrapped looks like this:
 
-### Linters and spellcheck
+![architecture](readme_diagram.png)
 
-```bash
-make lint
-make spellcheck
-# fix common linting issues
-make lint-fix
-```
+## Deploy application
 
-## Deploy to azure
+For the demo, we will be orchestrating the deployment locally. In other words, we will be running the pipeline commands locally.
 
-Everything is deploy and manage through `AZD`. The main configuration file is `azure.yaml`. If you want to have a look into the schema and options please have a read [here](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/azd-schema)
+1. Build the container
 
-### Step by step
-
-1. connect AZD to azure
+    After running the bootstrap, in this step we will be creating the docker container and pushing it into the bootstrapped ACR.
 
     ```bash
-    azd auth login
+    make ci-package
     ```
 
-2. validate the package is able to get containerize (will use latest tag -> if other tag required, please `export RELEASE_VERSION=<your tag>`). The pre package hook, will set the environment to tag the container image as `docusaurus-aca:<your tag>`.
+2. Update the deployment yaml
+
+    In this step we will be generating a deployment config. As you can see, dev team will require to have knowledge about the infra and requirements for the containerapp. This is one of the `cons` of this flow.
 
     ```bash
-    azd package
+    make prepare-template
     ```
 
-3. create the azure resources
+    You can find the template that will be used for deployment under `ci/deployment.yaml`.
 
-    ```bash
-    # when running the ocommand, you'll need to configure the subs/location
-    # by default the bicep templates will create a revision with a sample image
-    azd provision
+3. use `az cli` to deploy/create the containerapp
+
+    ```make
+    make deploy
     ```
 
-4. deploy the application
+## Summary
 
-    ```bash
-    azd deploy
-    ```
+### Pros
 
-### Short Cut
+- separates completely role of operations team and dev team
+- devs have full control of the container app
 
-```bash
-azd up
-```
+### Cons
 
-## Configuring Github Workflow
-
-This will allow you to configure a service principal in azure and federate it to your github account. After you finish the configuration, you can see a set of variables set in the repository.
-
-```bash
-azd pipeline config
-```
-
-## Infrastructure
-
-All the infrastructure that is being deployed can be found in the `infra` directory. In summary it creates:
-
-- Azure Container App
-- Azure Container App Environment
-- Managed Identity (with pull role to the ACR)
-- Azure Container Registry
-- Log Analytics
-
-![Diagram of app architecture](readme_diagram.png)
+- dev team requires to have knowledge about the configuration for the
+- there isn't an official schema for the yaml deployment

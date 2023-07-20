@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+az extension add --name containerapp
+
 npm install -g markdownlint
 npm install -g markdownlint-cli
 npm install -g cspell@latest
