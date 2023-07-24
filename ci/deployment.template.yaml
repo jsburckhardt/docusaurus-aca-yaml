@@ -24,4 +24,4 @@ properties:
   template:
     containers:
       - name: docusaurus
-        image: $REGISTRYNAME.azurecr.io/docusaurus:$VERSION_CONTAINER
+        image: $REGISTRYNAME.azurecr.io/docusaurus:$DOCS_VERSION

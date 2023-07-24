@@ -4,12 +4,6 @@ else
 	DOCS_VERSION := local
 endif
 
-ifdef ACR
-	REPO := $(ACR).azurecr.io/
-else
-	REPO :=
-endif
-
 SHELL := /bin/bash
 
 lint:
@@ -31,16 +25,15 @@ package:
 		./src/docusaurus
 
 package-tag:
-	docker tag docusaurus:$(DOCS_VERSION) $(REPO)docusaurus:$(DOCS_VERSION)
-	docker tag docusaurus:$(DOCS_VERSION) $(REPO)docusaurus:latest
-
-
+	export ACR=$$(az deployment sub show -n docusaurus-aca-yaml --query 'properties.outputs.containerRegistryServer.value' -o tsv); \
+    docker tag docusaurus:$(DOCS_VERSION) $${ACR}/docusaurus:$(DOCS_VERSION); \
+	docker tag docusaurus:$(DOCS_VERSION) $${ACR}/docusaurus:latest
 
 package-push:
-	export ACR=$$(az deployment sub show -n docusaurus-aca-yaml --query 'properties.outputs.containerRegistryName.value' -o tsv) \
-    az acr login -n $$(ACR)
-	docker push $(REPO)docusaurus:$(DOCS_VERSION)
-	docker push $(REPO)docusaurus:latest
+	export ACR=$$(az deployment sub show -n docusaurus-aca-yaml --query 'properties.outputs.containerRegistryServer.value' -o tsv); \
+    az acr login -n $${ACR}; \
+	docker push $${ACR}/docusaurus:$(DOCS_VERSION); \
+	docker push $${ACR}/docusaurus:latest;
 
 ci-package: package package-tag package-push
 
