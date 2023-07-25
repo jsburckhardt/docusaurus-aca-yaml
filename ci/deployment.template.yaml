@@ -1,0 +1,27 @@
+location: australiaeast
+name: $APPNAME
+resourceGroup: $RG
+type: Microsoft.App/containerApps
+identity:
+  type: userAssigned
+  userAssignedIdentities: {
+      '$MANAGED_IDENTITY_ID'
+    }
+properties:
+  managedEnvironmentId: $MANAGED_ENVIRONMENT_ID
+  configuration:
+    activeRevisionsMode: Single
+    identity:
+      userAssignedIdentities: $MANAGED_IDENTITY_ID
+    ingress:
+      external: true
+      allowInsecure: false
+      targetPort: 3000
+      transport: Auto
+    registries:
+      - identity: $MANAGED_IDENTITY_ID
+        server: $REGISTRYNAME.azurecr.io
+  template:
+    containers:
+      - name: docusaurus
+        image: $REGISTRYNAME.azurecr.io/docusaurus:$DOCS_VERSION
